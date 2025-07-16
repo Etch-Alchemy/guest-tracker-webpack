@@ -1,0 +1,27 @@
+@font-face {
+  font-family: Bitcount;
+  src: url(./assets/fonts/BitcountGridDouble_Roman-Regular.ttf);
+}
+@font-face {
+  font-family: Merriweather;
+  src: url(./assets/fonts/Merriweather_24pt-Regular.ttf);
+}
+html, body {
+    margin:0;
+    padding:0;
+    height: 100%;
+    width: 100%;
+    font-family: Bitcount;
+}
+#root {
+    height: 100%;
+    width: 100%;
+}
+
+.map {
+    height: 100%;
+    width: 100%;
+    display: table;
+    height: 100%;
+    background-color: rgba(151, 151, 151, 0.2);
+}
