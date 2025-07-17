@@ -26,10 +26,10 @@ const handleSetTitle = (event: any, title: string) => {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    minHeight: 1000,
-    minWidth: 1300,
-    maxHeight: 1000,
-    maxWidth: 1300,
+    minHeight: 800,
+    minWidth: 1200,
+    maxHeight: 1200,
+    maxWidth: 1920,
     darkTheme: true,
     center: true,
     fullscreenable: false,

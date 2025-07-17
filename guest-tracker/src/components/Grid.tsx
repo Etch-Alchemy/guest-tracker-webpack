@@ -12,7 +12,10 @@ import {
     AllCommunityModule,
     ModuleRegistry,
     themeQuartz,
-    RowSelectionOptions
+    RowSelectionOptions,
+    GridApi,
+    FirstDataRenderedEvent,
+    GridReadyEvent
 } from "ag-grid-community";
 import { themeBalham } from 'ag-grid-community';
 import { themeMaterial } from 'ag-grid-community';
@@ -21,22 +24,108 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 import { AgGridReact } from 'ag-grid-react';
 import "./Grid.css";
 function Grid(props) {
+    // States
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(false); // For loading status
+    const [isClearing, setIsClearing] = useState(false);
     const [error, setError] = useState(null); // For error handling
-
-    // Filter State
+    const [filters, setFilters] = useState(null);
     const [selectedName, setSelectedName] = useState('');
-    const getGridData = () => console.log(data);
-    const options = [
-    { value: 'chocolate', label: 'Chocolate' },
-    { value: 'strawberry', label: 'Strawberry' },
-    { value: 'vanilla', label: 'Vanilla' }
-    ]
-
+    // Refs
     const gridRef = useRef<AgGridReact>(null);
-    const clearFilters = useCallback(() => {
+    const filterBarRef = useRef<HTMLDivElement>(null);
+    const createQuickFilters = (
+        gridRef: React.RefObject<AgGridReact>,
+        clear? : boolean
+    ) => {
+        let quickFilters : React.JSX.Element[] = [];
+        if(clear){
+            return quickFilters;
+        } else {
+            if(gridRef.current){
+                let rowData = gridRef.current!.props.rowData;
+                let api = gridRef.current!.api;
+                if(rowData) {
+                    if(rowData.length > 0){
+                        let obj = rowData[0];
+                        for(let ind in colDefs){
+                            let field = colDefs[ind].field;
+                            let fieldType = typeof(obj[field]);
+                            switch(fieldType){
+                                case "string": {
+                                    let options =  [...new Set(rowData.filter((row) => row[field]).map((item) => item[field]))].map((item) => {
+                                        return { value: item, label: item }
+                                    });
+                                    // options.unshift({value: "", label: `Select ${field}...`})
+                                    let handleChange = (value: any, meta: any) => {
+
+                                        if(value.length == 0){
+                                            let currentFilter = api.getColumnFilterModel(field);
+                                            api.setColumnFilterModel(field, null);
+                                            api.onFilterChanged();
+                                        } else if(value.length > 1){
+                                            let filterModel = {
+                                                [field]: {
+                                                    filterType: 'text',
+                                                    type: 'equals',
+                                                    operator: 'OR',
+                                                    conditions: [...new Set(value.map((item: any) => { 
+                                                        return {
+                                                            filterType: 'text',
+                                                            type: 'equals',
+                                                            filter: item.value
+                                                        } 
+                                                    }))]
+                                                }
+                                            } 
+                                            api.setFilterModel(filterModel);
+                                        } else {
+                                            let filterModel = {
+                                                [field]: {
+                                                    filterType: 'text',
+                                                    type: 'equals',
+                                                    filter: value[0].value
+                                                }
+                                            } 
+                                            gridRef.current!.api.setFilterModel(filterModel);
+                                        }
+                                        console.log(value, meta);
+                                    }
+                                    quickFilters.push(<Select 
+                                        className="filter"
+                                        placeholder={"Select " + field}
+                                        options={options}
+                                        escapeClearsValue={true}
+                                        backspaceRemovesValue={true}
+                                        isClearable={true}
+                                        isMulti={true}
+                                        onChange={handleChange}
+                                        ></Select>);
+                                }
+                                case "boolean":{
+                                    
+                                }
+                                default: {
+
+                                }
+                            }
+                        }
+                        return quickFilters;
+                    }
+                }
+            } else {
+                return quickFilters;
+            }
+        }
+    }
+
+    // Callbacks
+    const clearFilters = useCallback((event: any, filters: any) => {
         gridRef.current!.api.setFilterModel(null);
+        gridRef.current!.api.applyColumnState({
+            defaultState: { sort: null },
+        });
+        setIsClearing(true);
     }, []);
 
 
@@ -48,7 +137,6 @@ function Grid(props) {
         { field: "Invitee" },
         { field: "Table" },
         { field: "RSVP" },
-
     ]);
     
     const defaultColDef = {
@@ -70,36 +158,37 @@ function Grid(props) {
     const theme = useMemo<Theme | "legacy">(() => {
         return myTheme;
     }, []);
-    const quickFilterText = '';
-    useEffect(() => {
-        const getData = async (e) => {
-            setIsLoading(true); // Set loading state
-            setError(null); // Clear previous errors
-            await window.electronAPI.loadList().then((result) => {
-                setIsLoading(false);
-                setError(null);
-                result = JSON.parse(result);
-                let transformedData = [];
-                for(let i = 0; i < result.length; i++){
-                    let item = result[i];
-                    let arr = Object.keys(item)
-                    if(item["Name"]){
-                        for(let j = 0; j < arr.length; j++){
-                        let key = Object.keys(item)[j];
-                            if(item[key] == 'TRUE')
-                                item[key] = true;
-                            if(item[key] == 'FALSE')
-                                item[key] = false;
-                        }
-                        transformedData.push(item);
+    const loadDataFromCsv = async () : Promise<any[]> => {
+        setIsLoading(true); // Set loading state
+        setError(null); // Clear previous errors
+        let transformedData : any[] = [];
+        await window.electronAPI.loadList().then((result: string) => {
+            setIsLoading(false);
+            setError(null);
+            let rawData = JSON.parse(result);
+            for(let i = 0; i < rawData.length; i++){
+                let item = rawData[i];
+                let arr = Object.keys(item)
+                if(item["Name"]){
+                    for(let j = 0; j < arr.length; j++){
+                    let key = Object.keys(item)[j];
+                        if(item[key] == 'TRUE')
+                            item[key] = true;
+                        if(item[key] == 'FALSE')
+                            item[key] = false;
                     }
-                    console.log(item);
+                    transformedData.push(item);
                 }
-                console.log(transformedData);
-                setData(transformedData);
-            })
-        }
-        getData();
+            }
+        })
+        return transformedData;
+    }
+    useEffect(() => {
+                const fetch = async () => {
+                    const result = await loadDataFromCsv(); 
+                    setData(result);
+                }
+                fetch();
     }, []); // Empty dependency array means this effect runs once on mount
 
     if (isLoading) {
@@ -112,20 +201,23 @@ function Grid(props) {
     const rowSelectionOptons : RowSelectionOptions = {
         mode: "multiRow",
         selectAll: 'filtered',
-        checkboxes: true
+        checkboxes: true,
     }
-    const handleClearFilter = (e: any) => {
-        
+
+    const handleFirstDataRendered = (event: FirstDataRenderedEvent<any>) => {
+        console.log(event);
+    }
+    const handleGridReady = (event: GridReadyEvent<any>) => {
+        createQuickFilters(gridRef);
     }
     return (
         <React.Fragment>
         <div>
             <div className="grid-filters">
-                <Select options={options}         
-                className="filter"
-                placeholder="Select a Surname..."
-                classNamePrefix="filter"/>
-                <button className="grid-filters-clear" onClick={clearFilters}> Clear Filters </button>
+                <div className="quick-filters" ref={filterBarRef}>
+                    {createQuickFilters(gridRef, isClearing)}
+                </div>
+                <button className="grid-filters-clear" onClick={(event) => {clearFilters(event, filters)}}> Clear Filters </button>
             </div>
             <AgGridReact
             className="grid"
@@ -134,11 +226,9 @@ function Grid(props) {
                 columnDefs={colDefs}
                 defaultColDef={defaultColDef}
                 theme={theme}
-                quickFilterText={quickFilterText}
-                sideBar={"filters"}
                 rowSelection={rowSelectionOptons}
-                
-                
+                onFirstDataRendered={handleFirstDataRendered}
+                onGridReady={handleGridReady}
             />
         </div>
         </React.Fragment>

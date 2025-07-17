@@ -10,18 +10,22 @@
     list-style-type:  none;
     padding: .5rem;
 }
-
-.filter {
+.grid-filters .quick-filters{
+    display: flex;
+}
+.grid-filters .quick-filters .filter {
     width: fit-content;
     z-index: 9999;
-    padding: .5rem;
+    padding: .2rem;
+    min-width: 175px;
 }
 .grid-filters {
-width: 91% !important;
+width: 90% !important;
     margin: auto;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    padding: .5rem;
+    align-items: baseline;
 }
 .grid-filters .header {
 
