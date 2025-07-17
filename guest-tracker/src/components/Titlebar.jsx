@@ -21,6 +21,7 @@ class Titlebar extends React.Component {
             <React.Fragment>
 
                 <div className="titlebar">
+                    <div className="app-name">Guest Tracker v1</div>
                     <div className="icon-group">
                         <MinusCircleIcon className="icon" onClick={minimize}></MinusCircleIcon>
                         <XMarkIcon className="icon" onClick={close}></XMarkIcon>

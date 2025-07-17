@@ -10,17 +10,17 @@
     flex-wrap: nowrap;
 }
 .box.mid {
-    margin: auto;
     max-width: calc(100vw);
-    max-height: calc(95vh);
+    max-height: calc(100vh);
     overflow: hidden;
 }
 .box--banner {
     position: sticky;
     display: flex;
     text-align: center;
-    background-color: #242328;
+    background-color: #9654b574;
     padding: .5rem;
+    display: none;
     width: -webkit-fill-available;
 }
 .box--banner .header {
@@ -28,38 +28,26 @@
     color: white;
     margin: auto;
     width: 100%;
+    
 }
 .box--banner .icon {
     width: 50px;
     margin-right: .5rem;
 }
 .box--content  {
-    height: 100%;
+height: 100%;
     width: 100%;
-    color: black;
-    background-image: url("../images/particle-bg.jpg");
+
+        background-image: url("../images/particle-bg.jpg");
     background-blend-mode: lighten;
-    background-color: rgb(234, 178, 224);
-    box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 40%);
-    overflow-y: scroll;
+    background-color: rgb(214, 147, 190);
+
 }
 .box--content:hover {
-cursor: pointer;
-    color: black;
-    background-blend-mode: lighten;
-    background-color: rgb(225, 152, 212);
-    box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 20%);
-    transition: 200ms;
+
 }
 .box--content section {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    align-content: center;
-    height: 100%;
-    width: 100%;  
-    text-align: center;
-    font-weight: 600;
+
 }
 .factoid {
     height: 100%;

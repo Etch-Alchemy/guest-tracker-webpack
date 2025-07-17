@@ -26,10 +26,10 @@ const handleSetTitle = (event: any, title: string) => {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    minHeight: 600,
-    minWidth: 800,
-    maxHeight: 600,
-    maxWidth: 800,
+    minHeight: 1000,
+    minWidth: 1300,
+    maxHeight: 1000,
+    maxWidth: 1300,
     darkTheme: true,
     center: true,
     fullscreenable: false,
@@ -77,9 +77,11 @@ const createWindow = (): void => {
         return new Promise((resolve, reject) => {
     Papa.parse(fs.createReadStream('./GuestList.csv'), {
       header: true,
-      transformHeader: h => h.trim(),
+      transformHeader: function(h) {
+        return h.trim().replace(/"/g, '');
+      },
       complete: function(results) {
-        resolve(results.data); // Resolve with parsed data
+        resolve(JSON.stringify(results.data)); // Resolve with parsed data
       },
       error: function(error: any) {
         reject(error); // Reject on error

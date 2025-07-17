@@ -25,9 +25,7 @@ class Container extends React.Component {
                         { this.options.header ? <span className='header'> {this.options.header} </span> : this.defaults.header } 
                     </div>
                     <div className='box--content'>
-                        <section>
-                            { this.props.children }
-                        </section>
+                        { this.props.children }
                     </div>
                 </div>
             </React.Fragment>
