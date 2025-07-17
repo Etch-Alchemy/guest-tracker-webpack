@@ -1,0 +1,9 @@
+.grid {
+    width: 100%;
+    height: 100%;
+}
+
+.grid li {
+    list-style-type:  none;
+    padding: .5rem;
+}

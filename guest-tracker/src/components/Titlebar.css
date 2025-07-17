@@ -1,0 +1,24 @@
+.titlebar {
+    background-color: black;
+    color: white;
+    -webkit-user-select: none;
+    -webkit-app-region: drag;
+}
+
+.titlebar .icon-group .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    cursor: pointer;
+    padding: .3rem;
+    -webkit-app-region: no-drag;
+}
+.titlebar .icon-group .icon:hover { 
+    background-blend-mode: lighten;
+    background-color: rgb(225, 152, 212);
+    box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 20%);
+    transition: 200ms;
+}
+
+.titlebar .icon-group {
+    float: right;
+}
