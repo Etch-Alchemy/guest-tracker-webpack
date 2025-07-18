@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Container from './Container';
 import Titlebar from './Titlebar';
-import Grid from './Grid';
+import Grid from './GridClass';
 const App = () => {
     const containerConfig = {
         header: "Guest List"
@@ -14,7 +14,7 @@ const App = () => {
                 options = {{
                     header: "Guest Tracker v1"
                 }}>
-                <Grid></Grid>
+                <Grid />
             </Container>
         </div>
         </React.Fragment>

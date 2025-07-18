@@ -6,8 +6,10 @@ import React, {
   useEffect,
   StrictMode,
   SyntheticEvent,
+  RefObject,
+  createRef,
 } from "react";
-import Select from 'react-select'
+import Select, { components, InputProps } from 'react-select';
 import {
     AllCommunityModule,
     ModuleRegistry,
@@ -23,26 +25,38 @@ import { themeMaterial } from 'ag-grid-community';
 ModuleRegistry.registerModules([AllCommunityModule]);
 import { AgGridReact } from 'ag-grid-react';
 import "./Grid.css";
-function Grid(props) {
+import Control, { ControlProps } from "react-select/dist/declarations/src/components/Control";
+function GridFunction(props: any) {
     // States
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(false); // For loading status
-    const [isClearing, setIsClearing] = useState(false);
     const [error, setError] = useState(null); // For error handling
-    const [filters, setFilters] = useState(null);
+    const [filters, setFilters] = React.useState([] as React.JSX.Element[]);
+    const [filterRefs, setFilterRefs] = React.useState<RefObject<React.JSX.Element>[]>([] as RefObject<React.JSX.Element>[]);
+    const itemsRef = useRef(null);
+    function getItemRef(item: any) {
+    const map = getMap();
+    const node = map.get(item);
+        console.log(node);
+    }
+    function getMap() {
+    if (!itemsRef.current) {
+        // Initialize the Map on first usage.
+        itemsRef.current = new Map();
+        }
+        return itemsRef.current;
+    }
     const [selectedName, setSelectedName] = useState('');
+
     // Refs
     const gridRef = useRef<AgGridReact>(null);
     const filterBarRef = useRef<HTMLDivElement>(null);
-    const createQuickFilters = (
-        gridRef: React.RefObject<AgGridReact>,
-        clear? : boolean
-    ) => {
+    const clearButtonRef = useRef<HTMLButtonElement>(null);
+    const refFilters = useRef([]);
+
+    const createQuickFilters = (gridRef: React.RefObject<AgGridReact>) => {
         let quickFilters : React.JSX.Element[] = [];
-        if(clear){
-            return quickFilters;
-        } else {
-            if(gridRef.current){
+        if(gridRef.current){
                 let rowData = gridRef.current!.props.rowData;
                 let api = gridRef.current!.api;
                 if(rowData) {
@@ -92,7 +106,7 @@ function Grid(props) {
                                         console.log(value, meta);
                                     }
                                     quickFilters.push(<Select 
-                                        className="filter"
+                                        className={`filter`}
                                         placeholder={"Select " + field}
                                         options={options}
                                         escapeClearsValue={true}
@@ -110,13 +124,10 @@ function Grid(props) {
                                 }
                             }
                         }
-                        return quickFilters;
                     }
                 }
-            } else {
-                return quickFilters;
-            }
         }
+        return quickFilters;
     }
 
     // Callbacks
@@ -125,7 +136,6 @@ function Grid(props) {
         gridRef.current!.api.applyColumnState({
             defaultState: { sort: null },
         });
-        setIsClearing(true);
     }, []);
 
 
@@ -203,21 +213,26 @@ function Grid(props) {
         selectAll: 'filtered',
         checkboxes: true,
     }
-
+const options = [
+  { value: 'chocolate', label: 'Chocolate' },
+  { value: 'strawberry', label: 'Strawberry' },
+  { value: 'vanilla', label: 'Vanilla' }
+]
     const handleFirstDataRendered = (event: FirstDataRenderedEvent<any>) => {
         console.log(event);
     }
     const handleGridReady = (event: GridReadyEvent<any>) => {
-        createQuickFilters(gridRef);
+        let filters = createQuickFilters(gridRef);
+        setFilters(filters);
     }
     return (
         <React.Fragment>
         <div>
-            <div className="grid-filters">
-                <div className="quick-filters" ref={filterBarRef}>
-                    {createQuickFilters(gridRef, isClearing)}
+            <div className="grid-filters" ref={filterBarRef}>
+                <div className="quick-filters" >
+                    {filters}
                 </div>
-                <button className="grid-filters-clear" onClick={(event) => {clearFilters(event, filters)}}> Clear Filters </button>
+                {/* <button className="grid-filters-clear" ref={clearButtonRef} onClick={(event) => {clearFilters(event, filters)}}> Clear Filters </button> */}
             </div>
             <AgGridReact
             className="grid"
@@ -234,4 +249,4 @@ function Grid(props) {
         </React.Fragment>
     )
 }
-export default Grid;
+export default GridFunction;
