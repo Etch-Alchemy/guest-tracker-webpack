@@ -10,28 +10,43 @@ import React, {
   createRef,
 } from "react";
   import Select from 'react-select';
+import { AgGridReact } from 'ag-grid-react';
 interface IProps {
   options: any[],
+  colId: string,
+  gridRef: RefObject<AgGridReact>,
   placeholder: string,
   handleSelectChange: (newValue: any, meta: any) => void
 }
 interface IState {
   options: any[]
 }
+
     class GridFilter extends React.Component<IProps, IState> {
+        colId: string;
+        gridRef: RefObject<AgGridReact>;
         filterRef: React.RefObject<any>;
         onClear: () => void;
+        updateOptions: (options: any[]) => void;
         constructor(props: IProps){
           super(props);
           this.state = {
             options: props.options
           }
+          this.colId = props.colId;
           this.filterRef = React.createRef();
+          this.gridRef = this.props.gridRef;
           this.onClear = () => {
               this.filterRef.current.clearValue();
           };
+          this.updateOptions = (options) => {
+            this.setState({
+              options: options
+            });
+          }
         }
         render () {
+          console.log(this.gridRef);
           return (
               <Select
               className={`filter`}

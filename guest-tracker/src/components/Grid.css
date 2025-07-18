@@ -2,10 +2,14 @@
     height: 90% !important;
     width: 90% !important;
     margin: auto;
-
+min-height: 800px;
+max-height: 800px;
     box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 20%);
 }
-
+.ag-root-wrapper {
+    border: 0;
+    border-radius: 0;
+}
 .grid li {
     list-style-type:  none;
     padding: .5rem;
@@ -32,7 +36,7 @@ width: 90% !important;
 
 }
 
-.grid-filters button {
+.grid-wrapper button {
     padding: .4rem;
     border-radius: .3rem;
     font-size: 1rem;
@@ -40,8 +44,17 @@ width: 90% !important;
     transition: 200ms;
     color: white;
     cursor: pointer;
+    margin-left: .5rem;
 }
-.grid-filters button:hover {
+.grid-wrapper button:hover {
     background-color: rgb(190, 136, 185);
 }
 
+.grid-wrapper .footer {
+    width: 90% !important;
+    margin: auto;
+    display: flex;
+    justify-content: flex-start;
+    padding: .5rem;
+    align-items: baseline;
+}

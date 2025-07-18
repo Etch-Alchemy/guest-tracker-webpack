@@ -1,75 +1,157 @@
+// <reference path="index.d.ts" />
+import "./Grid.css";
+import { fadeIn, fadeOut, flashElement } from "../anim";
+// React Declarations
 import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
+  MouseEvent,
   StrictMode,
-  SyntheticEvent,
   RefObject,
   createRef,
 } from "react";
-import Select, { components, InputProps } from 'react-select';
+import Select from 'react-select';
+
+// Custom Declarations
+import GridFilter from "./GridFilter";
+// AG Grid Declarations
 import {
     AllCommunityModule,
     ModuleRegistry,
     themeQuartz,
+    ColDef,
     RowSelectionOptions,
     GridApi,
     FirstDataRenderedEvent,
-    GridReadyEvent
+    GridReadyEvent,
+    Theme,
+    CellValueChangedEvent
 } from "ag-grid-community";
-import { themeBalham } from 'ag-grid-community';
-import { themeMaterial } from 'ag-grid-community';
+import { AgGridReact } from 'ag-grid-react';
+
 // Register all Community features
 ModuleRegistry.registerModules([AllCommunityModule]);
-import { AgGridReact } from 'ag-grid-react';
-import "./Grid.css";
-import Control, { ControlProps } from "react-select/dist/declarations/src/components/Control";
-function GridFunction(props: any) {
-    // States
-    const [data, setData] = useState([]);
-    const [isLoading, setIsLoading] = useState(false); // For loading status
-    const [error, setError] = useState(null); // For error handling
-    const [filters, setFilters] = React.useState([] as React.JSX.Element[]);
-    const [filterRefs, setFilterRefs] = React.useState<RefObject<React.JSX.Element>[]>([] as RefObject<React.JSX.Element>[]);
-    const itemsRef = useRef(null);
-    function getItemRef(item: any) {
-    const map = getMap();
-    const node = map.get(item);
-        console.log(node);
-    }
-    function getMap() {
-    if (!itemsRef.current) {
-        // Initialize the Map on first usage.
-        itemsRef.current = new Map();
+
+
+// Interfaces
+interface IProps {
+  data?: any[];
+  colDef: ColDef[];
+}
+
+interface IState {
+  data: any[];
+  isLoading: boolean;
+  error: string;
+  filters: React.JSX.Element[];
+}
+
+class Grid extends React.Component<IProps, IState> {
+    itemRefs: GridFilter[];
+    gridRef: RefObject<AgGridReact>;
+    clearFilterButtonRef: RefObject<HTMLButtonElement>;
+    clearSelectionButtonRef: RefObject<HTMLButtonElement>;
+    loadButtonRef: RefObject<HTMLButtonElement>;
+    saveButtonRef: RefObject<HTMLButtonElement>;
+    savePath: string;
+    colDef: ColDef[];
+    defaultColDef: {};
+    theme: Theme;
+    rowSelectionOptions: RowSelectionOptions;
+    loadDataFromCsv: () =>  Promise<any[]>;
+    generateFilters : (gridRef: GridApi) => React.JSX.Element[];
+    handleFirstDataRendered: (event: FirstDataRenderedEvent<any>) => void;
+    handleGridReady: (event: GridReadyEvent<any>) => void;
+    handleFilterClear: () => void;
+    handleSelectionClear: (event: MouseEvent<HTMLButtonElement>) => void;
+  handleCellValueChanged: (event: CellValueChangedEvent) => void;
+  handleLoad: (event: MouseEvent<HTMLButtonElement>) => void;
+  handleSave: (event: MouseEvent<HTMLButtonElement>) => void;
+  clearFilters: (event: MouseEvent<HTMLButtonElement>, filters: React.JSX.Element[]) => void;
+    constructor(props: IProps)
+    {
+        super(props);
+
+        // AG Grid Config
+        this.itemRefs = [] as GridFilter[]; // Array to store refs
+        this.gridRef = createRef<AgGridReact>();
+        this.colDef = this.props.colDef;
+        this.savePath = null;
+        this.defaultColDef = {
+          editable: true,
+          flex: 1,
+          minWidth: 100,
+          filter: true,
+        };
+        this.theme = themeQuartz.withParams({
+            backgroundColor: 'rgb(249, 245, 227)',
+            foregroundColor: 'rgb(126, 46, 132)',
+            headerTextColor: 'rgb(204, 245, 172)',
+            headerBackgroundColor: 'rgb(209, 64, 129)',
+            oddRowBackgroundColor: 'rgb(0, 0, 0, 0.03)',
+            headerColumnResizeHandleColor: 'rgb(126, 46, 132)',
+        });
+        this.rowSelectionOptions =  {
+                mode: "multiRow",
+                selectAll: 'filtered',
+                checkboxes: true,
+            }
+        
+        // State Defaults 
+        this.state = {
+          data: props.data,
+          isLoading: false,
+          error: null,
+          filters: []
+        };
+
+        this.loadDataFromCsv = async () : Promise<any[]> => {
+          this.setState({
+          isLoading: true,
+          error: null
+          });
+          let transformedData : any[] = [];
+          await window.electronAPI.loadList(this.savePath).then((result: string) => {
+              this.setState({
+              isLoading: true,
+              error: null
+              });
+              let rawData = JSON.parse(result);
+              for(let i = 0; i < rawData.length; i++){
+                  let item = rawData[i];
+                  let arr = Object.keys(item)
+                  if(item["Name"]){
+                      for(let j = 0; j < arr.length; j++){
+                      let key = Object.keys(item)[j];
+                          if(item[key] == 'TRUE')
+                              item[key] = true;
+                          if(item[key] == 'FALSE')
+                              item[key] = false;
+                      }
+                      transformedData.push(item);
+                  }
+              }
+          })
+          return transformedData;
         }
-        return itemsRef.current;
-    }
-    const [selectedName, setSelectedName] = useState('');
 
-    // Refs
-    const gridRef = useRef<AgGridReact>(null);
-    const filterBarRef = useRef<HTMLDivElement>(null);
-    const clearButtonRef = useRef<HTMLButtonElement>(null);
-    const refFilters = useRef([]);
-
-    const createQuickFilters = (gridRef: React.RefObject<AgGridReact>) => {
+        // AG Grid Events
+        const getOptionsFromRowData = (rowData: any[], field: string) => {
+        return [...new Set(rowData.filter((row) => row[field]).map((item) => item[field]))].map((item) => {
+                                                return { value: item, label: item }
+                                            });
+        }
+        this.generateFilters = (api: GridApi) => {
         let quickFilters : React.JSX.Element[] = [];
-        if(gridRef.current){
-                let rowData = gridRef.current!.props.rowData;
-                let api = gridRef.current!.api;
+        if(api){
+                let rowData = this.state.data;
                 if(rowData) {
                     if(rowData.length > 0){
                         let obj = rowData[0];
-                        for(let ind in colDefs){
-                            let field = colDefs[ind].field;
+                        for(let ind in this.colDef){
+                            let field = this.colDef[ind].field;
                             let fieldType = typeof(obj[field]);
                             switch(fieldType){
                                 case "string": {
-                                    let options =  [...new Set(rowData.filter((row) => row[field]).map((item) => item[field]))].map((item) => {
-                                        return { value: item, label: item }
-                                    });
+                                    let options = getOptionsFromRowData(rowData, field);
                                     // options.unshift({value: "", label: `Select ${field}...`})
                                     let handleChange = (value: any, meta: any) => {
 
@@ -101,20 +183,19 @@ function GridFunction(props: any) {
                                                     filter: value[0].value
                                                 }
                                             } 
-                                            gridRef.current!.api.setFilterModel(filterModel);
+                                            api.setFilterModel(filterModel);
                                         }
                                         console.log(value, meta);
                                     }
-                                    quickFilters.push(<Select 
-                                        className={`filter`}
-                                        placeholder={"Select " + field}
+                                    quickFilters.push(<GridFilter
+                                        colId={field}
+                                        gridRef={this.gridRef}
+                                        placeholder={
+                                          field}
                                         options={options}
-                                        escapeClearsValue={true}
-                                        backspaceRemovesValue={true}
-                                        isClearable={true}
-                                        isMulti={true}
-                                        onChange={handleChange}
-                                        ></Select>);
+                                        handleSelectChange={handleChange}
+                                        />
+                                      );
                                 }
                                 case "boolean":{
                                     
@@ -129,124 +210,123 @@ function GridFunction(props: any) {
         }
         return quickFilters;
     }
+        this.handleFirstDataRendered = (event: FirstDataRenderedEvent<any>) => {
+            console.log(event);
+        }
+        this.handleGridReady = (event: GridReadyEvent<any>) => {
+            let filters = this.generateFilters(event.api);
+            this.setState({
+              filters: filters
+            })
+        }
 
-    // Callbacks
-    const clearFilters = useCallback((event: any, filters: any) => {
-        gridRef.current!.api.setFilterModel(null);
-        gridRef.current!.api.applyColumnState({
-            defaultState: { sort: null },
-        });
-    }, []);
-
-
-    // Column Definitions: Defines the columns to be displayed.
-    const [colDefs, setColDefs] = useState([
-        { field: "Name" },
-        { field: "Surname" },
-        { field: "Relationship" },
-        { field: "Invitee" },
-        { field: "Table" },
-        { field: "RSVP" },
-    ]);
-    
-    const defaultColDef = {
-        editable: true,
-        flex: 1,
-        minWidth: 100,
-        filter: true,
-    };
-
-    // Grid Theming
-    const myTheme = themeQuartz.withParams({
-        backgroundColor: 'rgb(249, 245, 227)',
-        foregroundColor: 'rgb(126, 46, 132)',
-        headerTextColor: 'rgb(204, 245, 172)',
-        headerBackgroundColor: 'rgb(209, 64, 129)',
-        oddRowBackgroundColor: 'rgb(0, 0, 0, 0.03)',
-        headerColumnResizeHandleColor: 'rgb(126, 46, 132)',
-    });
-    const theme = useMemo<Theme | "legacy">(() => {
-        return myTheme;
-    }, []);
-    const loadDataFromCsv = async () : Promise<any[]> => {
-        setIsLoading(true); // Set loading state
-        setError(null); // Clear previous errors
-        let transformedData : any[] = [];
-        await window.electronAPI.loadList().then((result: string) => {
-            setIsLoading(false);
-            setError(null);
-            let rawData = JSON.parse(result);
-            for(let i = 0; i < rawData.length; i++){
-                let item = rawData[i];
-                let arr = Object.keys(item)
-                if(item["Name"]){
-                    for(let j = 0; j < arr.length; j++){
-                    let key = Object.keys(item)[j];
-                        if(item[key] == 'TRUE')
-                            item[key] = true;
-                        if(item[key] == 'FALSE')
-                            item[key] = false;
-                    }
-                    transformedData.push(item);
-                }
+        this.handleCellValueChanged = (event: CellValueChangedEvent) => {
+          console.log(event);
+          let editedNode = event.node;
+          let selectedNodes = event.api.getSelectedNodes();
+          let otherNodes = selectedNodes.filter((node) => node !== editedNode);
+          otherNodes.forEach((node, idx) => {
+            node.setDataValue(event.column.getColId(), event.newValue);
+          });
+          this.itemRefs.filter((ref) => ref.colId == event.column.getColId()).forEach((affectedFilter, idx) => {
+            console.log(affectedFilter);
+            affectedFilter.updateOptions(getOptionsFromRowData(event.api.getGridOption("rowData"), event.column.getColId()));
+          })
+        }
+        // Event Handlers
+        this.handleFilterClear = () => {
+          if(this.itemRefs.length > 0){
+            for(let i = 0; i < this.itemRefs.length; i++){
+              let filter = this.itemRefs[i];
+              filter.onClear();
             }
-        })
-        return transformedData;
+          }
+        }
+        this.clearFilters = (event: any, filters: React.JSX.Element[]) => {
+          this.gridRef.current!.api.setFilterModel(null);
+          this.gridRef.current!.api.applyColumnState({
+              defaultState: { sort: null },
+          });
+          this.handleFilterClear();
+        }
+        this.handleSelectionClear = (event:any ) => {
+          this.gridRef.current!.api.deselectAll();
+        }
+        this.handleSave = (event: MouseEvent<HTMLButtonElement>) => {
+          let csvData = this.gridRef.current.api.getDataAsCsv();
+          window.electronAPI.saveData(csvData).then((result: any) => {
+            console.log(result);
+          });
+        }
+        this.handleLoad = (event: MouseEvent<HTMLButtonElement>) => {
+          this.gridRef.current.api.exportDataAsCsv();
+          console.log(event);
+        }
+      }
+  
+    componentDidMount() {
+        console.log(this.itemRefs);
+        const fetch = async () => {
+                    const result = await this.loadDataFromCsv(); 
+                    this.setState({
+                      data: result
+                    });
+                    console.log(this.state.data);
+                  }
+        fetch();
+        const getSavePath = async () => {
+           await window.electronAPI.getConfig().then((result: any) => {
+            this.savePath = result.pathToCsv;
+            console.log(result);
+            console.log(this.savePath);
+          });
+        }
+        getSavePath();
     }
-    useEffect(() => {
-                const fetch = async () => {
-                    const result = await loadDataFromCsv(); 
-                    setData(result);
-                }
-                fetch();
-    }, []); // Empty dependency array means this effect runs once on mount
+    componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
+      console.log(prevState);
+    }
+    render() {
+        const undoRedoCellEditing = true;
+        const undoRedoCellEditingLimit = 20;
+        return (
+          <React.Fragment>
+            <div className="grid-wrapper" id="grid-wrapper">
 
-    if (isLoading) {
-        return <div>Loading data...</div>;
-    }
-
-    if (error) {
-        return <div>Error: {error.message}</div>;
-    }
-    const rowSelectionOptons : RowSelectionOptions = {
-        mode: "multiRow",
-        selectAll: 'filtered',
-        checkboxes: true,
-    }
-const options = [
-  { value: 'chocolate', label: 'Chocolate' },
-  { value: 'strawberry', label: 'Strawberry' },
-  { value: 'vanilla', label: 'Vanilla' }
-]
-    const handleFirstDataRendered = (event: FirstDataRenderedEvent<any>) => {
-        console.log(event);
-    }
-    const handleGridReady = (event: GridReadyEvent<any>) => {
-        let filters = createQuickFilters(gridRef);
-        setFilters(filters);
-    }
-    return (
-        <React.Fragment>
-        <div>
-            <div className="grid-filters" ref={filterBarRef}>
-                <div className="quick-filters" >
-                    {filters}
+                <div className="grid-filters">
+                    <div className="quick-filters" >
+                      {this.state.filters.map((item, index) => (
+                        React.cloneElement(item, {ref: (el: any) => (this.itemRefs[index] = el)  }))
+                        )
+                      }
+                    </div>
+                    {<button className="grid-filters-clear" ref={this.clearFilterButtonRef} onClick={(event) => {this.clearFilters(event, this.state.filters)}}> Clear Filters </button>}
+                    {<button className="grid-filters-clearSelection" ref={this.clearSelectionButtonRef} onClick={(event) => {this.handleSelectionClear(event)}}> Clear Selections </button>}
                 </div>
-                {/* <button className="grid-filters-clear" ref={clearButtonRef} onClick={(event) => {clearFilters(event, filters)}}> Clear Filters </button> */}
+                <AgGridReact
+                className="grid"
+                
+                    ref={this.gridRef}
+                    rowData={this.state.data}
+                    columnDefs={this.colDef}
+                    defaultColDef={this.defaultColDef}
+                    theme={this.theme}
+                    rowSelection={this.rowSelectionOptions}
+                    onFirstDataRendered={this.handleFirstDataRendered}
+                    onGridReady={this.handleGridReady}
+                    undoRedoCellEditing={undoRedoCellEditing}
+                    undoRedoCellEditingLimit={undoRedoCellEditingLimit}
+                    onCellValueChanged={this.handleCellValueChanged}
+                />
+                <div className="footer">
+                  {<button className="grid-save" ref={this.saveButtonRef} onClick={(event) => {this.handleSave(event)}}> Save </button>}
+                  {/* {<button className="grid-load" ref={this.loadButtonRef} onClick={(event) => {this.handleLoad(event)}}> Load </button>} */}
+                </div>
             </div>
-            <AgGridReact
-            className="grid"
-                ref={gridRef}
-                rowData={data}
-                columnDefs={colDefs}
-                defaultColDef={defaultColDef}
-                theme={theme}
-                rowSelection={rowSelectionOptons}
-                onFirstDataRendered={handleFirstDataRendered}
-                onGridReady={handleGridReady}
-            />
-        </div>
-        </React.Fragment>
-    )
+          </React.Fragment>
+        );
+    }
+
 }
-export default GridFunction;
+
+export default Grid;
