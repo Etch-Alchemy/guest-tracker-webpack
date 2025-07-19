@@ -5,10 +5,10 @@
   "description": "My Electron application description",
   "main": ".webpack/main",
   "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
+    "start": "dotenvx run --env-file=.env.local -- electron-forge start",
+    "package": "dotenvx run --env-file=.env.prod -- electron-forge package",
+    "make": "dotenvx run --env-file=.env.prod -- electron-forge make",
+    "publish": "dotenvx run --env-file=.env.prod electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
@@ -47,11 +47,13 @@
     "typescript": "~4.5.4"
   },
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.48.0",
     "@heroicons/react": "^2.2.0",
     "@types/papaparse": "^5.3.16",
     "ag-grid-react": "^34.0.2",
     "csv-parser": "^3.2.0",
     "electron-squirrel-startup": "^1.0.1",
+    "env-cmd": "^10.1.0",
     "heroicons": "^2.2.0",
     "papaparse": "^5.5.3",
     "react": "^19.1.0",

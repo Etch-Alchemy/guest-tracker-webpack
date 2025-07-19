@@ -185,7 +185,6 @@ class Grid extends React.Component<IProps, IState> {
                                             } 
                                             api.setFilterModel(filterModel);
                                         }
-                                        console.log(value, meta);
                                     }
                                     quickFilters.push(<GridFilter
                                         colId={field}
@@ -211,7 +210,6 @@ class Grid extends React.Component<IProps, IState> {
         return quickFilters;
     }
         this.handleFirstDataRendered = (event: FirstDataRenderedEvent<any>) => {
-            console.log(event);
         }
         this.handleGridReady = (event: GridReadyEvent<any>) => {
             let filters = this.generateFilters(event.api);
@@ -221,7 +219,6 @@ class Grid extends React.Component<IProps, IState> {
         }
 
         this.handleCellValueChanged = (event: CellValueChangedEvent) => {
-          console.log(event);
           let editedNode = event.node;
           let selectedNodes = event.api.getSelectedNodes();
           let otherNodes = selectedNodes.filter((node) => node !== editedNode);
@@ -229,7 +226,6 @@ class Grid extends React.Component<IProps, IState> {
             node.setDataValue(event.column.getColId(), event.newValue);
           });
           this.itemRefs.filter((ref) => ref.colId == event.column.getColId()).forEach((affectedFilter, idx) => {
-            console.log(affectedFilter);
             affectedFilter.updateOptions(getOptionsFromRowData(event.api.getGridOption("rowData"), event.column.getColId()));
           })
         }
@@ -255,36 +251,29 @@ class Grid extends React.Component<IProps, IState> {
         this.handleSave = (event: MouseEvent<HTMLButtonElement>) => {
           let csvData = this.gridRef.current.api.getDataAsCsv();
           window.electronAPI.saveData(csvData).then((result: any) => {
-            console.log(result);
           });
         }
         this.handleLoad = (event: MouseEvent<HTMLButtonElement>) => {
           this.gridRef.current.api.exportDataAsCsv();
-          console.log(event);
         }
       }
   
     componentDidMount() {
-        console.log(this.itemRefs);
         const fetch = async () => {
                     const result = await this.loadDataFromCsv(); 
                     this.setState({
                       data: result
                     });
-                    console.log(this.state.data);
                   }
         fetch();
         const getSavePath = async () => {
            await window.electronAPI.getConfig().then((result: any) => {
             this.savePath = result.pathToCsv;
-            console.log(result);
-            console.log(this.savePath);
           });
         }
         getSavePath();
     }
     componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
-      console.log(prevState);
     }
     render() {
         const undoRedoCellEditing = true;

@@ -46,7 +46,6 @@ interface IState {
           }
         }
         render () {
-          console.log(this.gridRef);
           return (
               <Select
               className={`filter`}

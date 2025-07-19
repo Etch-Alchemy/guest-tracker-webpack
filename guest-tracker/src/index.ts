@@ -14,6 +14,8 @@ declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+const isDebug = process.env.TESTING === 'true';
+console.log(isDebug);
 const handleSetTitle = (event: any, title: string) => {
   const webContents = event.sender
   const win = BrowserWindow.fromWebContents(webContents)
@@ -72,7 +74,16 @@ const createWindow = (): void => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+if (process.env.NODE_ENV === 'development') {
+  console.log('Running in development environment');
+  mainWindow.webContents.openDevTools();
+  // Enable development-specific features, logging, etc.
+} else if (process.env.NODE_ENV === 'production') {
+  console.log('Running in production environment');
+  // Disable debug features, optimize for performance, etc.
+} else {
+  console.log('Running in an unknown environment:', process.env.NODE_ENV);
+}
 
   // shortcuts
 	globalShortcut.register('f5', function() {

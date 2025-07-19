@@ -9,12 +9,10 @@ class Titlebar extends React.Component {
 
     render() {
     const close = (e) => {
-        console.log(e);
         window.electronAPI.closeWindow();
     }
 
     const minimize = (e) => {
-        console.log(e);
         window.electronAPI.minimizeWindow();
     }
         return (
