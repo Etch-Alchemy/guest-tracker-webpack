@@ -1,9 +1,7 @@
 .grid {
-    height: 90% !important;
+height: 75% !important;
     width: 90% !important;
     margin: auto;
-min-height: 800px;
-max-height: 800px;
     box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 20%);
 }
 .ag-root-wrapper {
@@ -21,8 +19,8 @@ max-height: 800px;
     width: fit-content;
     z-index: 9999;
     padding: .2rem;
-    min-width: 175px;
-    max-width: 200px;
+    min-width: 125px;
+    max-width: 150px;
 }
 .grid-filters {
 width: 90% !important;
@@ -45,6 +43,7 @@ width: 90% !important;
     color: white;
     cursor: pointer;
     margin-left: .5rem;
+    font-size: 1rem;
 }
 .grid-wrapper button:hover {
     background-color: rgb(190, 136, 185);

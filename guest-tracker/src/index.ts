@@ -54,10 +54,8 @@ console.log(config);
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    minHeight: 1000,
-    minWidth: 1300,
-    maxHeight: 1200,
-    maxWidth: 1920,
+    minHeight: 800,
+    minWidth: 600,
     darkTheme: true,
     center: true,
     fullscreenable: false,
