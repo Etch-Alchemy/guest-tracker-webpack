@@ -18,7 +18,13 @@ import {
 ModuleRegistry.registerModules([
   SelectEditorModule
 ]);
-
+interface Guest {
+    Name: string,
+    Surname: string,
+    Relationship: string,
+    Invitee: string,
+    Table: string
+}
 const App = () => {
     const containerConfig = {
         header: "Guest List"

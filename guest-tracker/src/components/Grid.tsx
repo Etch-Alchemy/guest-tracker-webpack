@@ -51,6 +51,8 @@ class Grid extends React.Component<IProps, IState> {
     clearSelectionButtonRef: RefObject<HTMLButtonElement>;
     loadButtonRef: RefObject<HTMLButtonElement>;
     saveButtonRef: RefObject<HTMLButtonElement>;
+    addButtonRef: RefObject<HTMLButtonElement>;
+    deleteButtonRef: RefObject<HTMLButtonElement>;
     savePath: string;
     colDef: ColDef[];
     defaultColDef: {};
@@ -62,10 +64,12 @@ class Grid extends React.Component<IProps, IState> {
     handleGridReady: (event: GridReadyEvent<any>) => void;
     handleFilterClear: () => void;
     handleSelectionClear: (event: MouseEvent<HTMLButtonElement>) => void;
-  handleCellValueChanged: (event: CellValueChangedEvent) => void;
-  handleLoad: (event: MouseEvent<HTMLButtonElement>) => void;
-  handleSave: (event: MouseEvent<HTMLButtonElement>) => void;
-  clearFilters: (event: MouseEvent<HTMLButtonElement>, filters: React.JSX.Element[]) => void;
+    handleCellValueChanged: (event: CellValueChangedEvent) => void;
+    handleLoad: (event: MouseEvent<HTMLButtonElement>) => void;
+    handleSave: (event: MouseEvent<HTMLButtonElement>) => void;
+    handleDelete: (event: MouseEvent<HTMLButtonElement>) => void;
+    handleAdd: (event: MouseEvent<HTMLButtonElement>) => void;
+    clearFilters: (event: MouseEvent<HTMLButtonElement>, filters: React.JSX.Element[]) => void;
     constructor(props: IProps)
     {
         super(props);
@@ -253,6 +257,18 @@ class Grid extends React.Component<IProps, IState> {
           window.electronAPI.saveData(csvData).then((result: any) => {
           });
         }
+        this.handleAdd = (event: MouseEvent<HTMLButtonElement>) => {
+          let api = this.gridRef.current.api;
+          let data = api.getGridOption("rowData");
+          data.unshift({});
+          api.setGridOption("rowData", data);
+        }
+        this.handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
+          let api = this.gridRef.current.api;
+          let selectedData = api.getSelectedRows();
+          const res = api.applyTransaction({ remove: selectedData })!;
+          console.log(res);
+        }
         this.handleLoad = (event: MouseEvent<HTMLButtonElement>) => {
           this.gridRef.current.api.exportDataAsCsv();
         }
@@ -308,6 +324,8 @@ class Grid extends React.Component<IProps, IState> {
                     onCellValueChanged={this.handleCellValueChanged}
                 />
                 <div className="footer">
+                  {<button className="add-row" ref={this.addButtonRef} onClick={(event) => {this.handleAdd(event)}}> Add New Guest </button>}
+                  {<button className="delete-row" ref={this.deleteButtonRef} onClick={(event) => {this.handleDelete(event)}}> Delete Rows </button>}
                   {<button className="grid-save" ref={this.saveButtonRef} onClick={(event) => {this.handleSave(event)}}> Save </button>}
                   {/* {<button className="grid-load" ref={this.loadButtonRef} onClick={(event) => {this.handleLoad(event)}}> Load </button>} */}
                 </div>
