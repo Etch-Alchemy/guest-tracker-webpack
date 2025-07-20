@@ -307,8 +307,11 @@ class Grid extends React.Component<IProps, IState> {
                         )
                       }
                     </div>
-                    {<button className="grid-filters-clear" ref={this.clearFilterButtonRef} onClick={(event) => {this.clearFilters(event, this.state.filters)}}> Clear Filters </button>}
-                    {<button className="grid-filters-clearSelection" ref={this.clearSelectionButtonRef} onClick={(event) => {this.handleSelectionClear(event)}}> Clear Selections </button>}
+                    <div className="grid-filters-controls">
+                      {<button className="grid-filters-clear" ref={this.clearFilterButtonRef} onClick={(event) => {this.clearFilters(event, this.state.filters)}}> Clear Filters </button>}
+                      {<button className="grid-filters-clearSelection" ref={this.clearSelectionButtonRef} onClick={(event) => {this.handleSelectionClear(event)}}> Clear Selections </button>}
+                    </div>
+
                 </div>
                 <div className="header"> Settings </div>
                 <div className="grid-settings">
