@@ -1,7 +1,5 @@
 .grid {
-height: 75% !important;
-    width: 90% !important;
-    margin: auto;
+    min-height: 600px;
     box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 20%);
 }
 .ag-root-wrapper {
@@ -12,48 +10,67 @@ height: 75% !important;
     list-style-type:  none;
     padding: .5rem;
 }
+.grid-wrapper {
+display: flex
+;
+    width: 100%;
+    flex: 0 0 100%;
+    flex-direction: row;
+}
 .grid-filters .quick-filters{
-    display: flex;
+    display: flex
+;
+    flex-direction: column;
 }
 .grid-filters .quick-filters .filter {
-    width: fit-content;
+    width: -webkit-fill-available;
     z-index: 9999;
-    padding: .2rem;
-    min-width: 125px;
-    max-width: 150px;
+    padding: .5rem;
 }
 .grid-filters {
-width: 90% !important;
-    margin: auto;
-    display: flex;
-    justify-content: flex-start;
-    padding: .5rem;
+flex: 1;
+}
+.grid-controls {
+display: flex
+;
+    flex-direction: column;
+    padding: 1rem;
+}
+.grid-controls .header {
+    text-align: center;
+} 
+.grid-settings {
+    flex: 1;
+}
+.setting {
+display: inline-flex;
+padding: .5rem;
+    width: 100%;
     align-items: baseline;
+}
+.grid-content {
+    flex: 2;
+    padding: 1rem;
 }
 .grid-filters .header {
 
 }
 
 .grid-wrapper button {
-    padding: .4rem;
+padding: .4rem;
     border-radius: .3rem;
     font-size: 1rem;
     background-color: rgb(147, 45, 137);
     transition: 200ms;
     color: white;
     cursor: pointer;
-    margin-left: .5rem;
     font-size: 1rem;
+    margin: .5rem;
+    font-family: Bitcount;
 }
 .grid-wrapper button:hover {
     background-color: rgb(190, 136, 185);
 }
+.grid-footer {
 
-.grid-wrapper .footer {
-    width: 90% !important;
-    margin: auto;
-    display: flex;
-    justify-content: flex-start;
-    padding: .5rem;
-    align-items: baseline;
 }

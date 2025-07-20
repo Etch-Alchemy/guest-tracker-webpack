@@ -23,7 +23,8 @@ import {
     FirstDataRenderedEvent,
     GridReadyEvent,
     Theme,
-    CellValueChangedEvent
+    CellValueChangedEvent,
+    AgCheckbox
 } from "ag-grid-community";
 import { AgGridReact } from 'ag-grid-react';
 
@@ -297,7 +298,8 @@ class Grid extends React.Component<IProps, IState> {
         return (
           <React.Fragment>
             <div className="grid-wrapper" id="grid-wrapper">
-
+              <div className="grid-controls">
+                <div className="header"> Quick Filters </div>
                 <div className="grid-filters">
                     <div className="quick-filters" >
                       {this.state.filters.map((item, index) => (
@@ -308,9 +310,21 @@ class Grid extends React.Component<IProps, IState> {
                     {<button className="grid-filters-clear" ref={this.clearFilterButtonRef} onClick={(event) => {this.clearFilters(event, this.state.filters)}}> Clear Filters </button>}
                     {<button className="grid-filters-clearSelection" ref={this.clearSelectionButtonRef} onClick={(event) => {this.handleSelectionClear(event)}}> Clear Selections </button>}
                 </div>
-                <AgGridReact
-                className="grid"
-                
+                <div className="header"> Settings </div>
+                <div className="grid-settings">
+                    <div className="setting">
+                      <label className="setting-label">
+                        Auto Save
+                      </label>
+                      <div className="setting-control">
+                        <input type="checkbox" name="toggle-autosave"></input>
+                      </div>
+                  </div>
+                </div>
+              </div>
+                <div className="grid-content">
+                  <AgGridReact
+                      className="grid"
                     ref={this.gridRef}
                     rowData={this.state.data}
                     columnDefs={this.colDef}
@@ -322,13 +336,15 @@ class Grid extends React.Component<IProps, IState> {
                     undoRedoCellEditing={undoRedoCellEditing}
                     undoRedoCellEditingLimit={undoRedoCellEditingLimit}
                     onCellValueChanged={this.handleCellValueChanged}
-                />
-                <div className="footer">
+                  />
+                <div className="grid-footer">
                   {<button className="add-row" ref={this.addButtonRef} onClick={(event) => {this.handleAdd(event)}}> Add New Guest </button>}
                   {<button className="delete-row" ref={this.deleteButtonRef} onClick={(event) => {this.handleDelete(event)}}> Delete Rows </button>}
                   {<button className="grid-save" ref={this.saveButtonRef} onClick={(event) => {this.handleSave(event)}}> Save </button>}
                   {/* {<button className="grid-load" ref={this.loadButtonRef} onClick={(event) => {this.handleLoad(event)}}> Load </button>} */}
                 </div>
+                </div>
+
             </div>
           </React.Fragment>
         );
