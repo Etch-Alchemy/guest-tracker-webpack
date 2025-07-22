@@ -44,6 +44,7 @@ const App = () => {
                     field: "Name",
                     headerName: "Name",
                     cellEditor: "agSelectTextEditor",
+                    enableCellChangeFlash: true,
                         cellEditorParams: {
                             maxLength: 20
                     } as ITextCellEditorParams
@@ -52,6 +53,7 @@ const App = () => {
                     field: "Surname",
                     headerName: "Surname",
                     cellEditor: "agSelectTextEditor",
+                    enableCellChangeFlash: true,
                         cellEditorParams: {
                             maxLength: 20
                     } as ITextCellEditorParams
@@ -60,10 +62,15 @@ const App = () => {
                     field: "Relationship",
                     headerName: "Relationship",
                     cellEditor: "agSelectCellEditor",
+                    enableCellChangeFlash: true,
                     cellEditorParams: {
                         values: [
-                            "Friends",
-                            "Family"
+                            "Friend",
+                            "Family",
+                            "Anoima",
+                            "Ika",
+                            "Esan",
+                            "Igbodo",
                         ]
                     } as ISelectCellEditorParams
                 },
@@ -71,6 +78,7 @@ const App = () => {
                     field: "Invitee",
                     headerName: "Invitee",
                     cellEditor: "agSelectCellEditor",
+                    enableCellChangeFlash: true,
                     cellEditorParams: {
                         values: [
                             "Mamode",
@@ -86,6 +94,7 @@ const App = () => {
                     field: "Table #",
                     headerName: "Table #",
                     cellEditor: "agSelectCellEditor",
+                    enableCellChangeFlash: true,
                     cellEditorParams: {
                         values: [
                                     "1",

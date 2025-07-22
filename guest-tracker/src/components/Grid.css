@@ -1,4 +1,7 @@
-
+.hide {
+    display: none;
+    transition: 2s;
+}
 .grid {
     min-height: 600px;
     box-shadow: 5px 5px 5px 5px rgb(0 0 0 / 20%);
@@ -31,6 +34,10 @@ display: flex
     max-width: 300px;
     min-width: 300px;
 }
+.react-select-container {
+    margin-bottom: .5rem;
+    max-width: 250px;
+}
 .grid-filters-controls {
     display: flex;
     flex-direction: column;
@@ -48,15 +55,27 @@ display: flex
 text-align: center;
     color: #89305c;
     font-weight: 600;
+    margin-bottom: .5rem;
 } 
 .grid-settings {
     flex: 0;
 }
+.alert {
+    float: right;
+    color: #c1349b;
+    font-weight: 600;
+    font-size: 1.2rem;
+    transition: 2s;
+}
 .setting {
-display: inline-flex;
-padding: .5rem;
+    display: inline-flex;
+    padding: 0.5rem;
     width: 100%;
-    align-items: baseline;
+    flex-direction: row;
+}
+.setting .label {
+    margin-right: .5rem;
+    margin-top: .05rem;
 }
 .grid-content {
     flex: 1;
@@ -77,11 +96,15 @@ padding: .4rem;
     cursor: pointer;
     font-size: 1rem;
     margin: .5rem;
-    min-width: 150px;
+    min-width: 175px;
 }
 .grid-wrapper button:hover {
     background-color: rgb(190, 136, 185);
 }
 .grid-footer {
-
+display: flex
+;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
 }

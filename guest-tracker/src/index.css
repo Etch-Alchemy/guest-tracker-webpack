@@ -7,7 +7,7 @@
   src: url(../assets/fonts/Merriweather_24pt-Regular.ttf);
 }
 :root{
-    --ag-font-family: Bitcount;
+    --ag-font-family: Merriweather;
 }
 html, body {
     margin:0;
@@ -15,10 +15,9 @@ html, body {
     height: 100%;
     width: 100%;
     font-size: 1rem;
-    font-family: Bitcount;
 }
 html, body, button {
-    font-family: Bitcount;
+    font-family: Merriweather;
 }
 
 .map {

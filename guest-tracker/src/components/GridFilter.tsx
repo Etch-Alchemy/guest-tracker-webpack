@@ -48,7 +48,8 @@ interface IState {
         render () {
           return (
               <Select
-              className={`filter`}
+                className="react-select-container"
+  classNamePrefix="react-select"
               ref={this.filterRef}
               placeholder={this.props.placeholder}
               options={this.state.options} // Your array of available options

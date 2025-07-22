@@ -24,7 +24,9 @@ import {
     GridReadyEvent,
     Theme,
     CellValueChangedEvent,
-    AgCheckbox
+    AgCheckbox,
+    IRowNode,
+    SelectionChangedEvent
 } from "ag-grid-community";
 import { AgGridReact } from 'ag-grid-react';
 
@@ -40,6 +42,7 @@ interface IProps {
 
 interface IState {
   data: any[];
+  selectedNodes: IRowNode[];
   isLoading: boolean;
   error: string;
   filters: React.JSX.Element[];
@@ -54,6 +57,8 @@ class Grid extends React.Component<IProps, IState> {
     saveButtonRef: RefObject<HTMLButtonElement>;
     addButtonRef: RefObject<HTMLButtonElement>;
     deleteButtonRef: RefObject<HTMLButtonElement>;
+    toggleAutosaveRef: RefObject<HTMLInputElement>;
+    alertRef: RefObject<HTMLDivElement>
     savePath: string;
     colDef: ColDef[];
     defaultColDef: {};
@@ -61,11 +66,13 @@ class Grid extends React.Component<IProps, IState> {
     rowSelectionOptions: RowSelectionOptions;
     loadDataFromCsv: () =>  Promise<any[]>;
     generateFilters : (gridRef: GridApi) => React.JSX.Element[];
+    save: (notify? : boolean) => void;
     handleFirstDataRendered: (event: FirstDataRenderedEvent<any>) => void;
     handleGridReady: (event: GridReadyEvent<any>) => void;
     handleFilterClear: () => void;
     handleSelectionClear: (event: MouseEvent<HTMLButtonElement>) => void;
     handleCellValueChanged: (event: CellValueChangedEvent) => void;
+    handleSelectionChanged: (event: SelectionChangedEvent) => void;
     handleLoad: (event: MouseEvent<HTMLButtonElement>) => void;
     handleSave: (event: MouseEvent<HTMLButtonElement>) => void;
     handleDelete: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -78,6 +85,10 @@ class Grid extends React.Component<IProps, IState> {
         // AG Grid Config
         this.itemRefs = [] as GridFilter[]; // Array to store refs
         this.gridRef = createRef<AgGridReact>();
+        this.toggleAutosaveRef = createRef<HTMLInputElement>();
+        this.clearSelectionButtonRef = createRef<HTMLButtonElement>();
+        this.deleteButtonRef = createRef<HTMLButtonElement>();
+        this.alertRef = createRef<HTMLDivElement>();
         this.colDef = this.props.colDef;
         this.savePath = null;
         this.defaultColDef = {
@@ -103,6 +114,7 @@ class Grid extends React.Component<IProps, IState> {
         // State Defaults 
         this.state = {
           data: props.data,
+          selectedNodes: [],
           isLoading: false,
           error: null,
           filters: []
@@ -157,38 +169,38 @@ class Grid extends React.Component<IProps, IState> {
                             switch(fieldType){
                                 case "string": {
                                     let options = getOptionsFromRowData(rowData, field);
-                                    // options.unshift({value: "", label: `Select ${field}...`})
                                     let handleChange = (value: any, meta: any) => {
-
+                                        let currentFilters = Object.values(api.getFilterModel());
                                         if(value.length == 0){
-                                            let currentFilter = api.getColumnFilterModel(field);
                                             api.setColumnFilterModel(field, null);
                                             api.onFilterChanged();
                                         } else if(value.length > 1){
-                                            let filterModel = {
-                                                [field]: {
-                                                    filterType: 'text',
-                                                    type: 'equals',
-                                                    operator: 'OR',
-                                                    conditions: [...new Set(value.map((item: any) => { 
-                                                        return {
-                                                            filterType: 'text',
-                                                            type: 'equals',
-                                                            filter: item.value
-                                                        } 
-                                                    }))]
-                                                }
+                                          let newFilters = [...new Set(value.map((item: any) => { 
+                                              return {
+                                                  filterType: 'text',
+                                                  type: 'equals',
+                                                  filter: item.value
+                                              } 
+                                          }))];
+                                          let filterModel = {
+                                              filterType: 'text',
+                                              operator: 'OR',
+                                              conditions: newFilters
                                             } 
-                                            api.setFilterModel(filterModel);
+                                            api.setColumnFilterModel(field, filterModel).then((result) => {
+                                              console.log(result);
+                                            api.onFilterChanged();
+                                            });
                                         } else {
                                             let filterModel = {
-                                                [field]: {
-                                                    filterType: 'text',
-                                                    type: 'equals',
-                                                    filter: value[0].value
-                                                }
+                                              filterType: 'text',
+                                              type: 'equals',
+                                              filter: value[0].value
                                             } 
-                                            api.setFilterModel(filterModel);
+                                            api.setColumnFilterModel(field, filterModel).then((result) => {
+                                              console.log(result);
+                                            api.onFilterChanged();
+                                            });
                                         }
                                     }
                                     quickFilters.push(<GridFilter
@@ -222,7 +234,11 @@ class Grid extends React.Component<IProps, IState> {
               filters: filters
             })
         }
-
+        this.handleSelectionChanged = (event: SelectionChangedEvent) => {
+          const rowCount = event.selectedNodes?.length;
+          this.setState({selectedNodes: event.selectedNodes});
+          console.log("selection changed, " + rowCount + " rows selected");
+        }
         this.handleCellValueChanged = (event: CellValueChangedEvent) => {
           let editedNode = event.node;
           let selectedNodes = event.api.getSelectedNodes();
@@ -232,6 +248,16 @@ class Grid extends React.Component<IProps, IState> {
           });
           this.itemRefs.filter((ref) => ref.colId == event.column.getColId()).forEach((affectedFilter, idx) => {
             affectedFilter.updateOptions(getOptionsFromRowData(event.api.getGridOption("rowData"), event.column.getColId()));
+          })
+          if(this.toggleAutosaveRef.current.checked){
+            this.save(true);
+          }
+          event.api.refreshCells();
+          event.api.flashCells({
+            rowNodes: [editedNode]
+          })
+          event.api.flashCells({
+            rowNodes: selectedNodes
           })
         }
         // Event Handlers
@@ -253,10 +279,22 @@ class Grid extends React.Component<IProps, IState> {
         this.handleSelectionClear = (event:any ) => {
           this.gridRef.current!.api.deselectAll();
         }
-        this.handleSave = (event: MouseEvent<HTMLButtonElement>) => {
+        this.save = (notify? : boolean) => {
           let csvData = this.gridRef.current.api.getDataAsCsv();
           window.electronAPI.saveData(csvData).then((result: any) => {
+            if(notify){
+              console.log(result);
+              console.log("Data saved!");
+              this.alertRef.current.textContent = "Data saved!";
+              this.alertRef.current.setAttribute("style", "opacity: 1");
+              setTimeout(() => {
+                this.alertRef.current.setAttribute("style", "opacity: 0");
+              }, 2000)
+            }
           });
+        }
+        this.handleSave = (event: MouseEvent<HTMLButtonElement>) => {
+          this.save(true);
         }
         this.handleAdd = (event: MouseEvent<HTMLButtonElement>) => {
           let api = this.gridRef.current.api;
@@ -291,6 +329,20 @@ class Grid extends React.Component<IProps, IState> {
         getSavePath();
     }
     componentDidUpdate(prevProps: Readonly<IProps>, prevState: Readonly<IState>, snapshot?: any): void {
+      console.log(prevState);
+      if(this.state.selectedNodes?.length > 0){
+        this.clearSelectionButtonRef.current.classList.remove("hide");
+        this.clearSelectionButtonRef.current.classList.add("show");
+
+        this.deleteButtonRef.current.classList.remove("hide");
+        this.deleteButtonRef.current.classList.add("show");
+      } else {
+        this.clearSelectionButtonRef.current.classList.remove("show");
+        this.clearSelectionButtonRef.current.classList.add("hide");
+
+        this.deleteButtonRef.current.classList.remove("show");
+        this.deleteButtonRef.current.classList.add("hide");
+      }
     }
     render() {
         const undoRedoCellEditing = true;
@@ -316,11 +368,11 @@ class Grid extends React.Component<IProps, IState> {
                 <div className="header"> Settings </div>
                 <div className="grid-settings">
                     <div className="setting">
-                      <label className="setting-label">
+                      <label className="label">
                         Auto Save
                       </label>
-                      <div className="setting-control">
-                        <input type="checkbox" name="toggle-autosave"></input>
+                      <div className="control">
+                        {<input type="checkbox" name="toggle-autosave" ref={this.toggleAutosaveRef}></input>}
                       </div>
                   </div>
                 </div>
@@ -339,11 +391,13 @@ class Grid extends React.Component<IProps, IState> {
                     undoRedoCellEditing={undoRedoCellEditing}
                     undoRedoCellEditingLimit={undoRedoCellEditingLimit}
                     onCellValueChanged={this.handleCellValueChanged}
+                    onSelectionChanged={this.handleSelectionChanged}
                   />
                 <div className="grid-footer">
                   {<button className="add-row" ref={this.addButtonRef} onClick={(event) => {this.handleAdd(event)}}> Add New Guest </button>}
                   {<button className="delete-row" ref={this.deleteButtonRef} onClick={(event) => {this.handleDelete(event)}}> Delete Rows </button>}
                   {<button className="grid-save" ref={this.saveButtonRef} onClick={(event) => {this.handleSave(event)}}> Save </button>}
+                  {<div className="alert" ref={this.alertRef} style={{opacity: 0}}></div>}
                   {/* {<button className="grid-load" ref={this.loadButtonRef} onClick={(event) => {this.handleLoad(event)}}> Load </button>} */}
                 </div>
                 </div>
