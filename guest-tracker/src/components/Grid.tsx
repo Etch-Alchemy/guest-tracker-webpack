@@ -77,7 +77,7 @@ class Grid extends React.Component<IProps, IState> {
     handleSave: (event: MouseEvent<HTMLButtonElement>) => void;
     handleDelete: (event: MouseEvent<HTMLButtonElement>) => void;
     handleAdd: (event: MouseEvent<HTMLButtonElement>) => void;
-    clearFilters: (event: MouseEvent<HTMLButtonElement>, filters: React.JSX.Element[]) => void;
+    clearFilters: () => void;
     constructor(props: IProps)
     {
         super(props);
@@ -269,7 +269,7 @@ class Grid extends React.Component<IProps, IState> {
             }
           }
         }
-        this.clearFilters = (event: any, filters: React.JSX.Element[]) => {
+        this.clearFilters = () => {
           this.gridRef.current!.api.setFilterModel(null);
           this.gridRef.current!.api.applyColumnState({
               defaultState: { sort: null },
@@ -280,7 +280,9 @@ class Grid extends React.Component<IProps, IState> {
           this.gridRef.current!.api.deselectAll();
         }
         this.save = (notify? : boolean) => {
-          let csvData = this.gridRef.current.api.getDataAsCsv();
+          let csvData = this.gridRef.current.api.getDataAsCsv({
+            exportedRows: 'all'
+          });
           window.electronAPI.saveData(csvData).then((result: any) => {
             if(notify){
               console.log(result);
@@ -301,6 +303,7 @@ class Grid extends React.Component<IProps, IState> {
           let data = api.getGridOption("rowData");
           data.unshift({});
           api.setGridOption("rowData", data);
+          this.clearFilters();
         }
         this.handleDelete = (event: MouseEvent<HTMLButtonElement>) => {
           let api = this.gridRef.current.api;
@@ -360,7 +363,7 @@ class Grid extends React.Component<IProps, IState> {
                       }
                     </div>
                     <div className="grid-filters-controls">
-                      {<button className="grid-filters-clear" ref={this.clearFilterButtonRef} onClick={(event) => {this.clearFilters(event, this.state.filters)}}> Clear Filters </button>}
+                      {<button className="grid-filters-clear" ref={this.clearFilterButtonRef} onClick={(event) => {this.clearFilters()}}> Clear Filters </button>}
                       {<button className="grid-filters-clearSelection" ref={this.clearSelectionButtonRef} onClick={(event) => {this.handleSelectionClear(event)}}> Clear Selections </button>}
                     </div>
 
